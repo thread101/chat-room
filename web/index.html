@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>room chat</title>
+    <style>
+        html, body{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: larger;
+            width: fit-content;
+            max-width: 700px;
+            margin: auto;
+        }
+
+        html {
+            overflow-x: hidden;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        body {
+            overflow-x: hidden;
+            padding: 0;
+            margin: 0;
+        }
+        
+        #display {
+            padding: 2px;
+        }
+
+        #join form {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            min-width: 300px;
+            max-width: fit-content;
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+        }
+
+        #join form h4 {
+            padding: 0;
+            margin: 0;
+        }
+
+        #join form input {
+            min-width: fit-content;
+            margin: 5px;
+        }
+        
+        #join form input:last-child {
+            background-color: red;
+            color: white;
+            max-width: fit-content;
+            margin: auto;
+        }
+
+        #join form input:last-child:hover {
+            color: black;
+        }
+        
+        #join form input:last-child:active {
+            font-size: x-small;
+        }
+
+        #wrapper {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: fit-content;
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+            font-size: small;
+        }
+
+        #wrapper h3 {
+            padding: 0;
+            margin: 0;
+        }
+
+        #wrapper li {
+            text-align: left;
+        }
+
+        #send {
+            border-radius: 5px;
+            width: 90vw;
+            max-width: 600px;
+            display: flex;
+            flex-direction: row;
+            left: 0;
+            right: 0;
+            margin: auto;
+            position: fixed;
+            bottom: 10px;
+        }
+
+        #send textarea {
+            border-radius: 5px;
+            padding: 3px;
+            flex: 1;
+            resize: none;
+            overflow-y: hidden;
+            box-sizing: border-box;
+            line-height: 1.4;
+        }
+
+        #send input:last-child {
+            background-color: aqua;
+            color: black;
+            font-size: large;
+            height: max-content;
+            align-self: center;
+            margin-left: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #send input:last-child:hover {
+            background-color: grey;
+        }
+
+        #send input:last-child:active {
+            background-color: blue;
+            font-size: smaller;
+        }
+
+        #chats {
+            margin: 0;
+            padding: 0;
+        }
+
+        #list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            margin: auto;
+            overflow-y: auto;
+            width: 90vw;
+            max-width: 600px;
+            padding-bottom: 6vh;
+            min-height: 93vh;
+            background-color: antiquewhite;
+            border-style: solid;
+            border-width: 1px;
+        }
+
+        #list li {
+            background-color: burlywood;
+            padding: 5px;
+            margin: 5px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: fit-content;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #list li p {
+            padding: 2px;
+            margin: 0px;
+            max-width: 350px;
+            overflow-wrap: break-word;
+        }
+
+        #list li h6 {
+            color: white;
+            font-size: 10px;
+            margin: 0;
+            padding: 0;
+        }
+
+        #sent {
+            align-self: self-end;
+        }
+
+        .toast {
+            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+            padding: 2px 15px 1px 15px;
+            background-color: grey;
+            max-width: fit-content;
+            border-radius: 12px;
+            text-align: center;
+            font-size: small;
+            position: fixed;
+            color: white;
+            bottom: 6vh;
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
+
+    </style>
+</head>
+<body onload="run_status()">
+    <section id="display">
+        <div id="join">
+            <form action="#" onsubmit="join()">
+                <h4 id="status">connecting...</h4>
+                <input type="text" id="room" placeholder="Channel alias" required autocomplete="on">
+                <input type="password" id="password" placeholder="Password" required autocomplete="on">
+                <input type="submit" value="Join">
+            </form>
+        </div>
+    </section>
+
+    <div id="error" style="display: none;">
+        <div id="wrapper">
+            <h3>Address not reachable, possibilities:</h3>
+            <ol>
+                <li>Invalid base base_url</li><hr>
+                <li>Server offline</li><hr>
+                <li>Your network issue</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="type" style="display: none;">
+        <form action="#" id="send">
+            <textarea id="text" placeholder="Type your message" rows="2"></textarea>
+            <input type="button" value="send" onclick="send()">
+        </form>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        const base_url = "http://127.0.0.1:5000"
+        var ROOM = "";
+        var KEY = "";
+        const RECONNECT_COUNT = 5;
+        var retry = RECONNECT_COUNT;
+        const HISTORY_COUNT = 25;
+        var parties = Object();
+        var just_joined = true;
+
+        if (!localStorage.getItem('last_message'))
+            localStorage.setItem('last_message', '');
+
+        localStorage.setItem('login', document.getElementById('display').innerHTML);
+
+        async function run_status() {
+            var exit = false;
+            let target_element = document.getElementById("status");
+
+            if (!target_element)
+                return
+
+            await fetch(base_url)
+            .then(resp => {
+                if (resp.ok)
+                    return resp.json();
+            })
+            .then(data => {
+                let min = Math.floor(data.run_time/60);
+                let seconds = Math.ceil(data.run_time - (min*60));
+                target_element.innerHTML = "Status: " + data.status + "<br/>Runtime: " + min + ":" + seconds;
+            })
+            .catch(error => {
+                target_element.innerHTML = "Status: offline<br/>Runtime: --:--";
+                exit = true;
+            });
+            
+            if (exit)
+                return;
+
+            setTimeout(run_status, 1000);
+        }
+
+        function join() {
+            run_status();
+            let url = base_url + "/join";
+            let room = document.getElementById('room').value;
+            let password = document.getElementById('password').value;
+            localStorage.setItem('ROOM', room);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    "Content-Type" : "application/json"
+                },
+                body: JSON.stringify({
+                    room: room,
+                    password: password
+                })
+            })
+            .then(resp => {
+                if (resp.ok)
+                    return resp.json();
+            })
+            .then(data => {
+                if (data.error)
+                    showToast(data.error);
+
+                else {
+                    document.getElementById('display').innerHTML = "<div id='chats'></div>" +
+                    document.getElementById('type').innerHTML;
+
+                    var chats_div = document.createElement('div');
+                    ROOM = room;
+                    KEY = data.key;
+                    localStorage.setItem('KEY', KEY);
+                    showToast('You just joined the chat room');
+                    var error = chat();
+                }
+            })
+            .catch(error => {
+                document.getElementById("display").innerHTML = document.getElementById("error").innerHTML;
+            });
+        }
+    
+        async function chat() {
+            var URL = base_url + "/chat";
+            let page = "";
+            await fetch(URL, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    room: ROOM,
+                    key: KEY,
+                    message: ""
+                })
+            })
+            .then(resp => {
+                if (resp.ok)
+                    return resp.json()
+            })
+            .then(data => {
+                retry = RECONNECT_COUNT;
+                if (data.chats){
+                    let id;
+                    let c = 0;
+                    
+                    for (const message of data.chats.reverse()) {
+                        let _name = Object.keys(message)[0];
+                        let _mess = message[_name];
+                        let id;
+                        if (_name === KEY) {
+                            id = "sent";
+                            _name = 'You';
+                        }
+                        else {
+                            id = "received";
+                            let p = Object.keys(parties);
+                            if (!p.includes(_name))
+                                parties[_name] = 'party_' + p.length;
+
+                            if (c == 0 && _mess !== localStorage.getItem('last_message')) {
+                                showToast('You have new message(s)');
+                                localStorage.setItem("last_message" ,_mess);
+                            }
+                            _name = parties[_name];
+                        }
+                        page = `<li id='${id}'>\
+                            <p>${_mess}</p>\
+                            <h6>${_name}</h6>\
+                        </li>` + page;
+
+                        if (++c == HISTORY_COUNT)
+                            break;
+
+                    }
+                    document.getElementById('chats').innerHTML = "<ul id='list'>" + page + "</ul>";
+
+                    if (just_joined) {
+                        window.scrollTo(0, document.body.scrollHeight);
+                        just_joined = false;
+                    }
+                }
+                else {
+                    alert(data.error + ", connection may have been reset");
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                retry -= 1;
+                showToast('reconnecting...', 1000);
+            });
+
+            if (retry <= 0) {
+                showToast("Destination is unreachable");
+                return;
+            }
+            setTimeout(chat, 3000);
+        }
+
+        async function send() {
+            let exit = false;
+            var URL = base_url + "/chat";
+            let message = document.getElementById('text').value;
+            if (message.length < 1)
+                return;
+
+            await fetch(URL, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    room: ROOM,
+                    key: KEY,
+                    message: message
+                })
+            })
+            .then(resp => {
+                if (resp.ok)
+                    return resp.json()
+            })
+            .then(data => {
+                retry = RECONNECT_COUNT;
+                if (data.chats){
+                    id = 'sent';
+                    _name = "You"
+                    document.getElementById('list').innerHTML += `<li id='${id}'>\
+                        <p>${message}</p>\
+                        <h6>${_name}</h6>\
+                    </li>`
+                    document.getElementById('text').value = '';
+                }
+                else {
+                    showToast(data.error + ", reload to reconnect.");
+                    exit = true;
+                }
+            })
+            .catch(error => {
+                retry -= 1;
+                setTimeout(send, 1000);
+            });
+            
+            if (retry <= 0) {
+                showToast("Destination is unreachable, message not sent", 500);
+                showNotificationTitle();
+                return;
+            }
+
+            if (exit)
+                return;
+
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    
+        function showToast(message, duration=3000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.append(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => toast.remove(), 300)
+            }, duration);
+        }
+
+        window.onload = async function() {
+            if (localStorage.getItem('ROOM')) {
+                await fetch(`${base_url}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        room: localStorage.getItem('ROOM'),
+                        key: localStorage.getItem('KEY'),
+                        message: ""
+                    })
+                })
+                .then(resp => {
+                    if (resp.ok)
+                        return resp.json()
+                })
+                .then(data => {
+                    if (data.chats) {
+                        ROOM = localStorage.getItem('ROOM');
+                        KEY = localStorage.getItem('KEY');
+                        document.getElementById('display').innerHTML = "<div id='chats'></div>" +
+                        document.getElementById('type').innerHTML;
+                        chat();
+                    }
+                    else {
+                        document.getElementById('display').innerHTML = localStorage.getItem('login');
+                        run_status();
+                        localStorage.clear();
+                        showToast(data.error, 5000);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('display').innerHTML = localStorage.getItem('login');
+                    run_status();
+                    showToast('Could not load session');
+                    localStorage.clear();
+                });
+            }
+            else {
+                document.getElementById('display').innerHTML = localStorage.getItem('login');
+                run_status();
+            }
+        }
+
+    </script>
+
+</body>
+</html>
