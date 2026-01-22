@@ -6,4 +6,4 @@ get_python() {
     fi
 }
 
-(exec `get_python` ./server.py)
+(exec `get_python` ./app.py)
