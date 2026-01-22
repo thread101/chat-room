@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}" type="text/css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='icons/favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    <div class="page">
+        {% block content %}{% endblock content %}
+    </div>
+    <script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
+</body>
+</html>

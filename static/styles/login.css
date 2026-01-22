@@ -1,0 +1,75 @@
+form {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    background-color: white;
+    flex-direction: column;
+    max-width: fit-content;
+    text-align: center;
+    border-radius: 5px;
+    margin: 20px auto;
+    min-width: 300px;
+    display: flex;
+    padding: 10px;
+    opacity: 0;
+}
+
+form input, span, select {
+    margin: 4px;
+}
+
+form select {
+    text-transform: uppercase;
+    text-align: center;
+    color: blue;
+}
+
+form span {
+    font-size: smaller;
+    color:blue;
+    opacity: 0.6;
+}
+
+.show {
+    opacity: 1;
+
+    -webkit-transition: opacity 1.7s;
+    -moz-transition: opacity 1.7s;
+    transition: opacity 1.7s;
+}
+
+/* #join form {
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    min-width: 300px;
+    max-width: fit-content;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+#join form h4 {
+    padding: 0;
+    margin: 0;
+}
+
+#join form input {
+    min-width: fit-content;
+    margin: 5px;
+}
+
+#join form input:last-child {
+    background-color: red;
+    color: white;
+    max-width: fit-content;
+    margin: auto;
+}
+
+#join form input:last-child:hover {
+    color: black;
+}
+
+#join form input:last-child:active {
+    font-size: x-small;
+} */

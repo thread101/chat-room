@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/login.css') }}" type="text/css">
+    <form action="#" method="post" name="login">
+        <select name="option">
+            <option value="Join">Join chat</option>
+            <option value="Create">Create chat</option>
+        </select>
+        <input type="text" name="room" placeholder="Enter room alias" minlength="5" maxlength="15" required>
+        <input type="text" name="password" placeholder="Enter password" minlength="5" required>
+        <input type="submit" name="submit" value="Join">
+        <span>Simple chat connect with the crew.</span>
+    </form>
+    <script src="{{ url_for('static', filename='scripts/login.js') }}"></script>
+{% endblock content %}
