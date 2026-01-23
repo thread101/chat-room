@@ -1,6 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import time
+from pathlib import Path
+import sys
+
+p = f"{Path(__file__).resolve().parent}"
+sys.path.insert(0, p)
 
 import chat_handler as CH
 
@@ -9,7 +13,7 @@ app = Flask(__file__)
 CORS(app)
 
 
-@app.route("/new", methods=["POST"])
+@app.route("/api/new", methods=["POST"])
 def new():
     data = request.json
     entries = list(data.keys())
@@ -29,7 +33,7 @@ def new():
     return jsonify({"error": key})
 
 
-@app.route("/join", methods=["POST"])
+@app.route("/api/join", methods=["POST"])
 def join():
     data = request.json
     entries = list(data.keys())
@@ -46,7 +50,7 @@ def join():
     return jsonify({"error": key})
 
 
-@app.route("/chat", methods=["POST"])
+@app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.json
     entries = list(data.keys())

@@ -16,3 +16,23 @@ html, body{
     margin: auto;
     padding: 2px;
 }
+
+.toast {
+    background-color: darkgreen;
+    border-radius: 12px;
+    width: fit-content;
+    padding: 2px 5px;
+    position: fixed;
+    margin: auto;
+    opacity: 1;
+    right: 0;
+    left: 0;
+}
+
+.hide {
+    opacity: 0;
+
+    -webkit-transition: opacity 1.5s;
+    -moz-transition: opacity 1.5s;
+    transition: opacity 1.5s;
+}
