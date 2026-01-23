@@ -17,15 +17,16 @@ CORS(app)
 def new():
     data = request.json
     entries = list(data.keys())
-    if "room" not in entries or "password" not in entries:
+    if "room" not in entries or "password" not in entries or "alias" not in entries:
         return jsonify({"error": "invalid entries"})
 
     room = data["room"]
     password = data["password"]
+    alias = data["alias"]
     if len(password) < 4:
         return jsonify({"error": "password too short"})
 
-    key, status = Chats.new(room, password)
+    key, status = Chats.new(room, password, alias)
 
     if status == 0:
         return jsonify({"key": key})
@@ -37,13 +38,14 @@ def new():
 def join():
     data = request.json
     entries = list(data.keys())
-    if "room" not in entries or "password" not in entries:
+    if "room" not in entries or "password" not in entries or "alias" not in entries:
         return jsonify({"error": "invalid entries"})
 
     password = data["password"]
     room = data["room"]
+    alias = data["alias"]
 
-    key, status = Chats.join(room, password)
+    key, status = Chats.join(room, password, alias)
     if status == 0:
         return jsonify({"key": key})
 
@@ -60,12 +62,29 @@ def chat():
     key = data["key"]
     room = data["room"]
     message = data["message"]
-
+    
     chats, status = Chats.chat(room, key, message)
     if status == 0:
         return jsonify({"chats": chats})
 
     return jsonify({"error": chats})
+
+
+@app.route("/api/leave", methods=["POST"])
+def leave():
+    data = request.json
+    entries = list(data.keys())
+    if "key" not in entries or "room" not in entries:
+        return "invalid entries", 1
+
+    room = data["room"]
+    key = data["key"]
+    ret, status = Chats.leave(room, key)
+
+    if status != 0:
+        return jsonify({"error": ret})
+
+    return jsonify({"success": ret})
 
 
 if __name__ == "__main__":

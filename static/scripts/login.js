@@ -46,6 +46,7 @@ login_form.addEventListener('submit', (event) => {
     let mode = login_form.submit.value;
     let room_alias = login_form.room.value;
     let password = login_form.password.value;
+    let alias = login_form.alias.value;
     let route = mode === "Create" ? "/new" : "/join";
     
     fetch(`${api_path}${route}`, {
@@ -55,7 +56,8 @@ login_form.addEventListener('submit', (event) => {
         },
         body: JSON.stringify({
             room: room_alias,
-            password: password
+            password: password,
+            alias: alias
         })
     })
     .then(resp => {
@@ -73,7 +75,8 @@ login_form.addEventListener('submit', (event) => {
             toast("Action completed");
             let session_cookie = JSON.stringify({
                 room: room_alias,
-                key: data.key
+                key: data.key,
+                alias: alias
             });
             localStorage.setItem("session_cookie", session_cookie);
             let page = `${base_url}/chat-home`;

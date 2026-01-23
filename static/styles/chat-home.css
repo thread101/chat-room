@@ -45,5 +45,36 @@ textarea {
 .chats {
     height: calc(100vh - 110px);
     overflow: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
     top: 60px;
+}
+
+ul {
+    flex-direction: column;
+    list-style: none;
+    display: flex;
+    padding: 0;
+    margin: 0;
+}
+
+.sent, .received {
+    background-color: darkgreen;
+    border-radius: 12px;
+    width: fit-content;
+    max-width: 70%;
+    padding: 4px;
+    margin: 2px;
+}
+
+.sent span, .received span {
+    font-size: small;
+}
+
+.sent p, .received p {
+    margin: 2px;
+}
+
+.sent {
+    margin-left: auto;
 }
