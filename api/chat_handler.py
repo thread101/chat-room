@@ -71,7 +71,7 @@ class Chat:
             return room["chats"], 0
 
         room["chats"].append({alias: message})
-        return room["chats"][::-1], 0
+        return room["chats"], 0
 
     def leave(self, room: str, key: str):
         chats = self.chats

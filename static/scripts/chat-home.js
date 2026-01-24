@@ -1,13 +1,16 @@
 let chat_box = document.getElementsByTagName('textarea')[0];
 let leave_button = document.getElementsByTagName("button")[0];
 let send_button = document.getElementsByTagName('button')[1];
+let chat_interval = null;
 let loaded_chats = 0;
 
-window.onload = get_messages;
+window.onload = async () => await get_messages();
 
 async function get_messages() {
     if (localStorage.getItem("session_cookie")) {
         let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
+        document.getElementsByTagName('h4')[0].innerText = session_cookie.room;
+
         await fetch(`${api_path}/chat`, {
             method: 'POST',
             headers: {
@@ -32,8 +35,13 @@ async function get_messages() {
                 toast(data.error);
                 localStorage.removeItem("session_cookie");
                 setTimeout(() => window.location.replace(base_url), 1500);
-            } else 
+            } else {
                 update_chat(data.chats);
+                if (chat_interval)
+                    clearInterval(chat_interval);
+
+                chat_interval = setInterval(() => get_new_messages(), 2000);
+            }
         })
         .catch(error => {});
     } else {
@@ -71,6 +79,8 @@ leave_button.onclick = async function() {
     .catch(error => {});
     localStorage.removeItem("session_cookie");
     setTimeout(() => window.location.replace(base_url), 1500);
+    if (chat_interval)
+        clearInterval(chat_interval);
 }
 
 chat_box.oninput = () => {
@@ -95,7 +105,7 @@ chat_box.addEventListener('keypress', key => {
 });
 
 send_button.onclick = () => {
-    let message = chat_box.value;
+    let message = chat_box.value.trim();
     send_button.disabled = true;
     send_button.style.backgroundColor = "darkgrey";
     chat_box.value = ""
@@ -127,13 +137,44 @@ send_button.onclick = () => {
     .catch(error => {});
 }
 
+function get_new_messages() {
+    let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
+    fetch (`${api_path}/chat`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            room: session_cookie.room,
+            key: session_cookie.key,
+            message: ""
+        })
+    })
+    .then(resp => {
+        if (resp.ok)
+            return resp.json();
+        else
+            return;
+    })
+    .then(data => {
+        if (data.error) {
+            toast(data.error);
+            localStorage.removeItem("session_cookie");
+            setTimeout(() => window.location.replace(base_url), 1500);
+            if (chat_interval)
+                clearInterval(chat_interval);
+        }
+        else
+            update_chat(data.chats);
+    })
+    .catch(error => {});
+}
+
 function update_chat(chats) {
     let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
     if (document.getElementsByClassName("sent").length != 0 || document.getElementsByClassName("received").length != 0) {
         let ul = document.getElementsByTagName("ul")[0];
-        new_chats = chats.length - loaded_chats - 1;
-        console.log("new chats: " + new_chats + ", old chats: " + loaded_chats + ", received chats: " + chats.length);
-        for (let i = new_chats; i >= 0; i--) {
+        for (let i = loaded_chats; i < chats.length; i++) {
             let chat = chats[i];
             let alias = Object.keys(chat)[0];
             let message = Object.values(chat)[0];
@@ -151,7 +192,6 @@ function update_chat(chats) {
                 li.className = "received";
                 toast("New message");
             }
-            loaded_chats += 1;
         }
         let chats_div = document.getElementsByClassName("chats")[0];
         chats_div.appendChild(ul);
@@ -177,6 +217,6 @@ function update_chat(chats) {
         let chats_div = document.getElementsByClassName("chats")[0];
         chats_div.appendChild(ul);
         chats_div.scrollBy(0, chats_div.scrollHeight);
-        loaded_chats = chats.length;
     }
+    loaded_chats = chats.length;
 }
