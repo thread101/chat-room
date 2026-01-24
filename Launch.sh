@@ -32,7 +32,6 @@ source ./.App-env/bin/activate
 flask run -h localhost -p 8099&
 APP_PID=$!
 sleep 1
-[ $? -ne 0 ] && printf "${BOLD}${RED}Could not start application!!!\n${RESET}" >&2 && exit 1
 
 [ -e ./cloudflared.log ] && rm ./cloudflared.log
 cloudflared tunnel --url http://localhost:8099 --output json --logfile cloudflared.log&
