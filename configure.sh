@@ -40,7 +40,7 @@ manual_install() {
   		DISTRO_ID=$ID
 
   		case "$DISTRO_ID" in
-    		ubuntu|debian)
+    		ubuntu|debian|kali)
       			sudo dpkg -i "$PACKAGE_FILE";;
 		    fedora|centos|rhel)
 				sudo rpm -i "$PACKAGE_FILE";;
@@ -141,3 +141,4 @@ main() {
 }
 
 main
+exit 0
