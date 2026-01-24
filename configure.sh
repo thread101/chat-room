@@ -104,7 +104,7 @@ get_python() {
 }
 
 get_cloudflared() {
-	URL="https://github.com/cloudflare/cloudflared/releases/download/2026.1.1/"
+	readonly URL="https://github.com/cloudflare/cloudflared/releases/download/2026.1.1/"
 	if ! command -v cloudflared >/dev/null 2>&1; then
 		install_package cloudflared
 		[ $? -eq 0 ] && return 0 || printf "${BOLD}${YELLOW}Package unavailable, installing manually...\n${RESET}" 

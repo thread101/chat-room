@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+n=a
+arr="b c r e a"
+while [[ $(echo "$arr" | grep "$n") ]];do
+    echo "Exists"
+    sleep 1
+done

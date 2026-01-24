@@ -14,7 +14,17 @@ BOLD='\033[1m'
 cleanup() {
     printf "${BOLD}${BLUE}\nExiting...\n\n${RESET}"
     kill -9 $APP_PID $TUNNEL_PID
-    sleep 3
+    sleep 1
+    while [[ -n "$(pgrep flask | grep $APP_PID)" ]]; do
+        printf  "${BOLD}${BLUE}\nClossing flask app...\n${RESET}"
+        kill -9 $APP_PID
+        sleep 1
+    done
+    while [[ -n "$(pgrep cloudflared | grep $TUNNEL_PID)" ]]; do
+        printf "${BOLD}${BLUE}\nClosing cloudflared tunnel...\n${RESET}"
+        kill -9 $TUNNEL_PID
+        sleep 1
+    done 
     exit 0
 }
 
@@ -30,15 +40,15 @@ fi
 source ./.App-env/bin/activate
 
 flask run -h localhost -p 8099&
-APP_PID=$!
+readonly APP_PID=$!
 sleep 1
 
 [ -e ./cloudflared.log ] && rm ./cloudflared.log
 cloudflared tunnel --url http://localhost:8099 --output json --logfile cloudflared.log&
-TUNNEL_PID=$!
+readonly TUNNEL_PID=$!
 sleep 3
 
-max_retry=5
+readonly max_retry=5
 for ((i=0; i<$max_retry; i++)); do
     [ $(wc -l < ./cloudflared.log) -le 5 ] && ((i--))
     url=$(grep -oE "https://[a-z-]{5,}.trycloudflare.com" ./cloudflared.log)
