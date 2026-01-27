@@ -1,66 +1,68 @@
-#!/usr/bin/env bash
+@echo off
 
-BLACK='\033[30m'
-RED='\033[31m'
-GREEN='\033[32m'
-YELLOW='\033[33m'
-BLUE='\033[34m'
-MAGENTA='\033[35m'
-CYAN='\033[36m'
-WHITE='\033[37m'
-RESET='\033[0m'
-BOLD='\033[1m'
+setlocal enabledelayedexpansion
 
-cleanup() {
-    printf "${BOLD}${BLUE}\nExiting...\n\n${RESET}"
-    kill -9 $APP_PID $TUNNEL_PID
-    sleep 1
-    while [[ -n "$(pgrep flask | grep $APP_PID)" ]]; do
-        printf  "${BOLD}${BLUE}\nClossing flask app...\n${RESET}"
-        kill -9 $APP_PID
-        sleep 1
-    done
-    while [[ -n "$(pgrep cloudflared | grep $TUNNEL_PID)" ]]; do
-        printf "${BOLD}${BLUE}\nClosing cloudflared tunnel...\n${RESET}"
-        kill -9 $TUNNEL_PID
-        sleep 1
-    done 
-    exit 0
-}
+goto :main
 
-trap "cleanup" SIGINT
+:main
+setlocal
+	if not exist ".\.App-env\Scripts\python.exe" (
+		call .\configure.bat
+		if !ERRORLEVEL! neq 0 (
+			exit /b 1
+		)
+	)
+	
+	set CLOUFLARED_PATH=cloudflared
+	cloudflared --version >nul 2>&1
+	if !ERRORLEVEL! neq 0 (
+		if not exist ".cloudflared_path.txt" (
+			call .\configure.bat
+			if !ERRORLEVEL! neq 0 (
+				exit /b 1
+			)
+		)
+		set /p CLOUFLARED_PATH=<".cloudflared_path.txt"
+	)
+	
+	del cloudflared.log >nul 2>&1
+	call .\.App-env\Scripts\activate.bat
+	echo ^[*^] Starting flask backend...
+	start "flask backend" cmd /c "flask run -h localhost -p 8099"
 
-if [ ! -e ./.App-env ] || ! command -v cloudflared >/dev/null 2>&1; then
-    [ ! -e ./configure.sh ] && printf "${BOLD}${RED}Missing dependencies, get the 'configure.sh' file on the current directory.\n${RESET}" >&2 && exit 1
-    chmod +x ./configure.sh 2>/dev/null
-    ./configure.sh
-    [ $? -ne 0 ] && exit 1
-fi
-
-source ./.App-env/bin/activate
-
-flask run -h localhost -p 8099&
-readonly APP_PID=$!
-sleep 1
-
-[ -e ./cloudflared.log ] && rm ./cloudflared.log
-cloudflared tunnel --url http://localhost:8099 --output json --logfile cloudflared.log&
-readonly TUNNEL_PID=$!
-sleep 3
-
-readonly max_retry=5
-for ((i=0; i<$max_retry; i++)); do
-    [ $(wc -l < ./cloudflared.log) -le 5 ] && ((i--))
-    url=$(grep -oE "https://[a-z-]{5,}.trycloudflare.com" ./cloudflared.log)
-    [ -n "$url" ] && break
-    sleep 2
-done
-
-if [ -z "$url" ]; then
-    printf "\n${BOLD}${RED}Error could start a tunnel!!!\n\n${RESET}"
-    kill -9 $APP_PID $TUNNEL_PID
-else
-    printf "\n${BOLD}${GREEN}Tunnel url: $url${RESET}\n\n"
-fi
-
-wait
+	ping -n 4 127.0.0.1 >nul
+	echo ^[*^] Starting clouflared tunnel...
+	start "cloudflared tunnel" cmd /c "!CLOUFLARED_PATH! tunnel --url http://localhost:8099/ --logfile cloudflared.log"
+	
+	set PUBLIC_URL=nothing
+	ping -n 4 127.0.0.1 >nul
+	for /l %%g in (0,1,20) do (
+		for /f "tokens=*" %%A in ('findstr /i /R "https://.*\.trycloudflare\.com" cloudflared.log') do (
+			for /f "tokens=1-3 delims=^|" %%B in ("%%A") do (
+				if %%C neq "" (
+					set PUBLIC_URL=%%C
+					goto :open_link
+				)
+			)
+		)
+		ping -n 2 127.0.0.1 >nul
+	)
+	echo E: Unable to find cloudflared tunnel url^!^!^!
+	goto :clean_up
+	
+	:open_link
+	start !PUBLIC_URL!
+	
+	:loop
+		choice /c q /m "^[*^] Press 'q' to close the connection "
+		if !ERRORLEVEL! == 1 (
+			goto :clean_up
+		)
+	goto :loop
+	
+	:clean_up
+	echo ^[*^] Clossing connection...
+	taskkill /f /im flask.exe
+	taskkill /f /im cloudflared.exe
+endlocal
+goto :EOF
