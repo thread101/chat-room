@@ -3,53 +3,44 @@ setlocal enabledelayedexpansion
 
 goto :main
 
-:download_and_install
-setlocal
-	::url and download-name-regex-search
-	echo Openning !url!
-	start %~1
-	set regex=%~2
-	set projectPath=!cd!
-	cd !USERPROFILE!\Downloads
-	set /a downloaded=0
-	for /l %%i in (0, 1, 120) do (
-		dir /b | findstr /R /I "Unconfirmed.*\.crdownload" >nul
-		if !ERRORLEVEL!==0 (
-			echo Download started
-			echo Waiting for download to finish.
-			:loop
-				dir /b | findstr /R /I "Unconfirmed.*\.crdownload" >nul
-				if !ERRORLEVEL!==0 (
-					ping -n 4 127.0.0.1 > nul
-				) else (
-					set binary=nothing
-					for /f "delims=" %%a in ('dir /b ^| findstr /R /C:"!regex!"') do (
-						set "binary=%%a"
-						goto :install
-					)
-					:install
-					if exist !binary! (
-						echo Download completed
-						set /a downloaded=1
-						ping -n 2 127.0.0.1 > nul
-						call !binary!
-					) else (
-						echo Download cancelled or not a windows executable 1>&2
-					)
-					goto :finished
-				)
-			goto :loop
-		) else (
-			echo Waiting for download to start.
-		)
-		ping -n 2 127.0.0.1 > nul
-	)
-	:finished
-	cd !projectPath! >nul
-	if !downloaded! == 0 (
-		echo Item not downloaded^!^!^! 1>&2
+:is_online
+	ping -n 2 8.8.8.8 | findstr /I "host unreachable" >nul
+	if !ERRORLEVEL! == 0 (
+		echo E: Please connect to the internet^!^!^! 1>&2
 		exit /b 1
 	)
+	exit /b 0
+goto :EOF
+
+:download_and_install
+setlocal
+	call :is_online
+	if !ERRORLEVEL! == 1 (
+		exit /b 1
+	)
+	winget --version >nul 2>&1
+	if !ERRORLEVEL! neq 0 (
+		echo E: Please install winget to continue^!^!^! 1>&2
+		echo.
+		echo ^[*^] Open powershell as admin and run the following then reboot
+		echo   $progressPreference = ^'silentlyContinue^'
+		echo   Write-Host ^"Installing WinGet PowerShell module from PSGallery...^"
+		echo   Install-PackageProvider -Name NuGet -Force ^| Out-Null
+		echo   Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery ^| Out-Null
+		echo   Write-Host ^"Using Repair-WinGetPackageManager cmdlet to bootstrap WinGet...^"
+		echo   Repair-WinGetPackageManager -AllUsers
+		echo   Write-Host "Done."
+		echo.
+		echo else ^<https://learn.microsoft.com/en-us/windows/package-manager/winget/^> to get instructions.
+		exit /b 1
+	)
+	echo  ^[*^] Installing %~1...
+	winget install --id %~1
+	if !ERRORLEVEL! == 1 (
+		exit /b 1
+	)
+	echo ^[*^] %~1 installed successfully
+	exit /b 0
 endlocal
 goto :EOF
 
@@ -58,66 +49,79 @@ setlocal
 	set PYTHON_PATH=python.exe
 	python -c "print('hello')" | findstr hello >nul
 	if !ERRORLEVEL! == 0 (
-		python -c "import sys; print(f'Python {sys.version} detected')"
+		python -c "import sys; print(f'[*] Python {sys.version} detected')"
 		goto :configure_env
 	)
 	
-	echo Detected !PROCESSOR_ARCHITECTURE! processor architecture
-	set /a PYTHON_VERSION=10
-	set url=""
-	if !PROCESSOR_ARCHITECTURE! == AMD64 (
-		set url=https://www.python.org/ftp/python/3.!PYTHON_VERSION!.0/python-3.!PYTHON_VERSION!.0-amd64.exe
-	) else (
-		if !PROCESSOR_ARCHITECTURE! == ARM64 (
-			set url=https://www.python.org/ftp/python/3.!PYTHON_VERSION!.0/python-3.!PYTHON_VERSION!.0-arm64.exe
-		) else (
-			echo Unsupported architecture ^(!PROCESSOR_ARCHITECTURE!^), please select your system python binary^^!^^!^^! 1>&2
-			set url=https://www.python.org/ftp/python/3.!PYTHON_VERSION!.0/
-			pause
-		)
-	)
-
-	call :download_and_install !url! "python-3\.!PYTHON_VERSION!\.0.*\.exe"
+	call :download_and_install "Python.Python.3.13"
 	if !ERRORLEVEL! == 1 (
-		echo Python not installed nor configured^!^!^! 1>&2
+		echo E: Python not installed nor configured^!^!^! 1>&2
 		exit /b 1
 	)
 	:configure_env
 	if not exist .App-env\Scripts\activate.bat (
-		echo Creating virtual environment
+		echo ^[*^] Creating virtual environment
 		!PYTHON_PATH! -m venv .App-env
 	) else (
-		echo Virtual environment detected
+		echo ^[*^] Virtual environment detected
 	)
 	call .App-env\Scripts\activate.bat
 	if not exist requirements.txt (
-		echo Missing dependencies, please get 'requirements.txt' file 1>&2
+		echo E: Missing dependencies, please get 'requirements.txt' file 1>&2
+		exit /b 1
 	) else (
+		for /f "delims=/" %%g in (requirements.txt) do (
+			pip list --disable-pip-version-check | findstr /I "%%g" >nul
+			if !ERRORLEVEL! == 1 (
+				goto :install_packages
+			)
+			echo ^[*^] %%g already installed
+		)
+		exit /b 0
+		:install_packages
+		echo ^[*^] Installing packages
+		call :is_online
+		if !ERRORLEVEL! == 1 (
+			exit /b 1
+		)
 		pip install -r requirements.txt
 	)
+	exit /b 0
 endlocal
 goto :EOF
 
-:install_cloudflared
+:configure_cloudflared
 setlocal
-	echo !PROCESSOR_ARCHITECTURE! | findstr ARM >nul
-	if !ERRORLEVEL! == 0 (
-		echo Cloudflared binary not available for system architecture 1>&2
-		exit /b 1
-	)
-	echo Getting cloudflared...
-	echo !PROCESSOR_ARCHITECTURE! | findstr 64 >nul
-	set url=nothing
-	if !ERRORLEVEL! == 0 (
-		set url=https://github.com/cloudflare/cloudflared/releases/download/2026.1.1/cloudflared-windows-amd64.exe
-	) else (
-		set url=https://github.com/cloudflare/cloudflared/releases/download/2026.1.1/cloudflared-windows-386.exe
-	)
-	call :download_and_install !url! "cloudflared-windows-.*\.exe"
+	call :is_online
 	if !ERRORLEVEL! == 1 (
-		echo Cloudflared not downloaded nor configured^!^!^! 1>&2
 		exit /b 1
 	)
+	set CLOUDFLARED_PATH=cloudflared
+	cloudflared --version >nul 2>&1
+	if !ERRORLEVEL! == 0 (
+		goto :cloudflared_available
+	)
+	if not exist "C:\Program Files (x86)\cloudflared\cloudflared.exe" (
+		if not exist "C:\Program Files\cloudflared\cloudflared.exe" (
+			set CLOUDFLARED_PATH="C:\Program Files\cloudflared\cloudflared.exe"
+			goto :cloudflared_available
+		) else (
+			goto :download_cloudflared
+		)
+	) else (
+		set CLOUDFLARED_PATH="C:\Program Files (x86)\cloudflared\cloudflared.exe"
+		goto :cloudflared_available
+	)
+	:download_cloudflared
+	call :download_and_install "Cloudflare.cloudflared"
+	if !ERRORLEVEL! == 1 (
+		echo E: Cloudflared not downloaded nor configured^!^!^! 1>&2
+		exit /b 1
+	)
+	exit /b 0
+	:cloudflared_available
+	echo ^[*^] Cloudflared already installed
+	echo !CLOUDFLARED_PATH! >.cloudflared_path.txt
 endlocal
 goto :EOF
 
@@ -127,10 +131,10 @@ setlocal
     if !ERRORLEVEL! == 1 (
         exit /b 1
     )
-	call :install_cloudflared
+	call :configure_cloudflared
     if !ERRORLEVEL! == 1 (
         exit /b 1
     )
-    echo Configuration successful
+    echo ^[*^] Configuration successful
 endlocal
 goto :EOF
