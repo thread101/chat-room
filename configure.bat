@@ -96,6 +96,8 @@ setlocal
 	if !ERRORLEVEL! == 1 (
 		exit /b 1
 	)
+
+    :find_cloudflared
 	set CLOUDFLARED_PATH=cloudflared
 	cloudflared --version >nul 2>&1
 	if !ERRORLEVEL! == 0 (
@@ -118,7 +120,7 @@ setlocal
 		echo E: Cloudflared not downloaded nor configured^!^!^! 1>&2
 		exit /b 1
 	)
-	exit /b 0
+	goto :find_cloudflared
 	:cloudflared_available
 	echo ^[*^] Cloudflared already installed
 	echo !CLOUDFLARED_PATH! >.cloudflared_path.txt
