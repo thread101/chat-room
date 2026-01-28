@@ -44,7 +44,7 @@ readonly APP_PID=$!
 sleep 1
 
 [ -e ./cloudflared.log ] && rm ./cloudflared.log
-cloudflared tunnel --url http://localhost:8099 --output json --logfile cloudflared.log&
+cloudflared tunnel --url http://localhost:8099 --logfile cloudflared.log&
 readonly TUNNEL_PID=$!
 sleep 3
 

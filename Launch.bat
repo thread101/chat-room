@@ -33,11 +33,18 @@ setlocal
 	ping -n 4 127.0.0.1 >nul
 	echo ^[*^] Starting clouflared tunnel...
 	start "cloudflared tunnel" cmd /c "!CLOUFLARED_PATH! tunnel --url http://localhost:8099/ --logfile cloudflared.log"
-	
+
+	:wait
+	ping -n 2 127.0.0.1 >nul
+	if not exist "cloudflared.log" (
+		goto :wait
+	)
+
 	set PUBLIC_URL=nothing
-	ping -n 4 127.0.0.1 >nul
+	echo ^[*^] Finding public url...
+	ping -n 6 127.0.0.1 >nul
 	for /l %%g in (0,1,20) do (
-		for /f "tokens=*" %%A in ('findstr /i /R "https://.*\.trycloudflare\.com" cloudflared.log') do (
+		for /f "tokens=*" %%A in ('type cloudflared.log ^| findstr /i /R "https://.*\.trycloudflare\.com"') do (
 			for /f "tokens=1-3 delims=^|" %%B in ("%%A") do (
 				if %%C neq "" (
 					set PUBLIC_URL=%%C
@@ -51,10 +58,11 @@ setlocal
 	goto :clean_up
 	
 	:open_link
+	ping -n 6 127.0.0.1 >nul
 	start !PUBLIC_URL!
 	
 	:loop
-		choice /c q /m "^[*^] Press 'q' to close the connection "
+		choice /c q /m "[*] Press 'q' to close the connection "
 		if !ERRORLEVEL! == 1 (
 			goto :clean_up
 		)
