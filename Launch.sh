@@ -61,6 +61,8 @@ if [ -z "$url" ]; then
     kill -9 $APP_PID $TUNNEL_PID
 else
     printf "\n${BOLD}${GREEN}Tunnel url: $url${RESET}\n\n"
+    sleep 5
+    xdg-open "$url"
 fi
 
 wait
