@@ -102,7 +102,7 @@ setlocal
 		goto :cloudflared_available
 	)
 	if not exist "C:\Program Files (x86)\cloudflared\cloudflared.exe" (
-		if not exist "C:\Program Files\cloudflared\cloudflared.exe" (
+		if exist "C:\Program Files\cloudflared\cloudflared.exe" (
 			set CLOUDFLARED_PATH="C:\Program Files\cloudflared\cloudflared.exe"
 			goto :cloudflared_available
 		) else (
