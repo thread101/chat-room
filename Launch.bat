@@ -28,11 +28,11 @@ setlocal
 	del cloudflared.log >nul 2>&1
 	call .\.App-env\Scripts\activate.bat
 	echo ^[*^] Starting flask backend...
-	start "flask backend" cmd /c "flask run -h localhost -p 8099"
+	start /min "flask backend" cmd /c "flask run -h localhost -p 8099"
 
 	ping -n 4 127.0.0.1 >nul
 	echo ^[*^] Starting clouflared tunnel...
-	start "cloudflared tunnel" cmd /c "!CLOUFLARED_PATH! tunnel --url http://localhost:8099/ --logfile cloudflared.log"
+	start /min "cloudflared tunnel" cmd /c "!CLOUFLARED_PATH! tunnel --url http://localhost:8099/ --logfile cloudflared.log"
 
 	:wait
 	ping -n 2 127.0.0.1 >nul
@@ -58,8 +58,8 @@ setlocal
 	goto :clean_up
 	
 	:open_link
-	ping -n 6 127.0.0.1 >nul
-	start !PUBLIC_URL!
+	ping -n 2 127.0.0.1 >nul
+	echo ^[*^] Public url: !PUBLIC_URL!
 	
 	:loop
 		choice /c q /m "[*] Press 'q' to close the connection "

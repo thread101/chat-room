@@ -35,7 +35,7 @@ setlocal
 		exit /b 1
 	)
 	echo  ^[*^] Installing %~1...
-	winget install --id %~1
+	winget install --name "%~1" --source winget
 	if !ERRORLEVEL! == 1 (
 		exit /b 1
 	)
@@ -47,13 +47,13 @@ goto :EOF
 :configure_python
 setlocal
 	set PYTHON_PATH=python.exe
-	python -c "print('hello')" | findstr hello >nul
+	call python -c "print('hello')" | findstr hello >nul
 	if !ERRORLEVEL! == 0 (
 		python -c "import sys; print(f'[*] Python {sys.version} detected')"
 		goto :configure_env
 	)
 	
-	call :download_and_install "Python.Python.3.13"
+	call :download_and_install "Python 3.13"
 	if !ERRORLEVEL! == 1 (
 		echo E: Python not installed nor configured^!^!^! 1>&2
 		exit /b 1
@@ -115,7 +115,7 @@ setlocal
 		goto :cloudflared_available
 	)
 	:download_cloudflared
-	call :download_and_install "Cloudflare.cloudflared"
+	call :download_and_install "Cloudflared"
 	if !ERRORLEVEL! == 1 (
 		echo E: Cloudflared not downloaded nor configured^!^!^! 1>&2
 		exit /b 1
