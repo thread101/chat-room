@@ -72,5 +72,6 @@ setlocal
 	echo ^[*^] Clossing connection...
 	taskkill /f /im flask.exe
 	taskkill /f /im cloudflared.exe
+	pause
 endlocal
 goto :EOF
