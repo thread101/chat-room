@@ -195,9 +195,6 @@ function update_chat(chats) {
             li.appendChild(span);
             ul.appendChild(li);
         }
-
-        console.log(loaded_chats + " " + chats.length);
-        console.log("waiting for update...");
     } else {
         let ul = document.createElement("ul");
         ul.className = "chats-list";
@@ -221,5 +218,4 @@ function update_chat(chats) {
         chats_div.scrollBy(0, chats_div.scrollHeight);
     }
     loaded_chats = chats.length;
-    console.log("updating ...")
 }
