@@ -172,8 +172,9 @@ function get_new_messages() {
 
 function update_chat(chats) {
     let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
-    if (document.getElementsByClassName("sent").length != 0 || document.getElementsByClassName("received").length != 0) {
-        let ul = document.getElementsByTagName("ul")[0];
+    let chats_div = document.getElementsByClassName("chats")[0];
+    if (document.getElementsByClassName("chats-list")[0]) {
+        let ul = document.getElementsByClassName("chats-list")[0];
         for (let i = loaded_chats; i < chats.length; i++) {
             let chat = chats[i];
             let alias = Object.keys(chat)[0];
@@ -183,21 +184,23 @@ function update_chat(chats) {
             let span = document.createElement("span");
             span.innerText = alias;
             p.innerText = message;
-            li.appendChild(p);
-            li.appendChild(span);
-            ul.appendChild(li);
             if (alias === session_cookie.alias)
                 li.className = "sent";
             else {
                 li.className = "received";
                 toast("New message");
+                setTimeout(() => chats_div.scrollBy(0, chats_div.scrollHeight), 250);
             }
+            li.appendChild(p);
+            li.appendChild(span);
+            ul.appendChild(li);
         }
-        let chats_div = document.getElementsByClassName("chats")[0];
-        chats_div.appendChild(ul);
-        chats_div.scrollBy(0, chats_div.scrollHeight);
+
+        console.log(loaded_chats + " " + chats.length);
+        console.log("waiting for update...");
     } else {
         let ul = document.createElement("ul");
+        ul.className = "chats-list";
         chats.forEach((chat, index) => {
             let alias = Object.keys(chat)[0];
             let message = Object.values(chat)[0];
@@ -214,9 +217,9 @@ function update_chat(chats) {
             else
                 li.className = "received";
         });
-        let chats_div = document.getElementsByClassName("chats")[0];
         chats_div.appendChild(ul);
         chats_div.scrollBy(0, chats_div.scrollHeight);
     }
     loaded_chats = chats.length;
+    console.log("updating ...")
 }
