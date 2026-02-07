@@ -1,4 +1,12 @@
 {% extends "layout.html" %}
+{% block menu %}
+    <h4>Available Rooms</h4>
+    <ul>
+    {% for room in rooms %}
+        <li>{{ room }}</li>
+    {% endfor %}
+    </ul>
+{% endblock menu %}
 {% block content %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/login.css') }}" type="text/css">
     <form action="#" method="post" name="login">

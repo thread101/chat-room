@@ -1,7 +1,7 @@
 const base_url = `${window.location.origin}`;
 const api_path = `${base_url}/api`;
 
-function toast(message, timeout=1500, position="90vh") {
+function toast(message, timeout=1500, position="90%") {
     let div = document.getElementsByClassName("toast")[0] || document.createElement("div");
     let span = div.firstChild || document.createElement("span");
     span.innerText = message;

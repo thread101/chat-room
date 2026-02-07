@@ -1,14 +1,14 @@
 {% extends "layout.html" %}
+{% block menu %}
+    <h4>Members</h4>
+    <ul id="members"></ul>
+{% endblock menu %}
 {% block content %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/chat-home.css') }}" type="text/css">
-    <header>
-        <h4>Simple chat</h4>
-        <button>Leave chat</button>
-    </header>
     <section class="chats"></section>
     <section class="text">
         <textarea name="input" rows="2"></textarea>
-        <button type="button" disabled>send</button>
+        <button type="button" id="send-message" disabled>send</button>
     </section>
     <script src="{{ url_for('static', filename='scripts/chat-home.js') }}"></script>
 {% endblock content %}

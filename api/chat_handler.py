@@ -39,8 +39,8 @@ class Chat:
         if passwd != room["password"]:
             return "wrong password", 1
 
-        aliases = [alias["alias"] for alias in room["aliases"]]
-        if alias in aliases:
+        aliases = [alias["alias"].lower() for alias in room["aliases"]]
+        if alias.lower() in aliases:
             return "alias taken", 1
 
         key = secrets.token_hex(15)
@@ -92,6 +92,24 @@ class Chat:
         room["aliases"].remove(user)
         return "logged out", 0
 
+    def rooms(self):
+        chats = self.chats
+        return list(chats.keys()), 0
+
+    def members(self, room: str, key: str):
+        chats = self.chats
+        rooms = list(chats.keys())
+        if room not in rooms:
+            return "invalid room", 1
+
+        room = chats[room]
+        keys = [alias["key"] for alias in room["aliases"]]
+        if key not in keys:
+            return "invalid key", 1
+
+        aliases = [alias["alias"] for alias in room["aliases"]]
+        return aliases, 0
+
 
 if __name__ == "__main__":
     C = Chat()
@@ -103,3 +121,4 @@ if __name__ == "__main__":
     print(C.leave("chatq", key2 + " "))
     print(C.leave("chatq", key1))
     print(C.chats)
+    print(C.rooms())

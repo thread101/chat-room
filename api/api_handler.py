@@ -62,7 +62,7 @@ def chat():
     key = data["key"]
     room = data["room"]
     message = data["message"]
-    
+
     chats, status = Chats.chat(room, key, message)
     if status == 0:
         return jsonify({"chats": chats})
@@ -85,6 +85,32 @@ def leave():
         return jsonify({"error": ret})
 
     return jsonify({"success": ret})
+
+
+@app.route("/api/rooms", methods=["GET"])
+def rooms():
+    _rooms, status = Chats.rooms()
+    if status != 0:
+        return jsonify({"error": "unknown error"})
+
+    return jsonify({"rooms": _rooms})
+
+
+@app.route("/api/members", methods=["POST"])
+def members():
+    data = request.json
+    entries = list(data.keys())
+    if "room" not in entries or "key" not in entries:
+        return jsonify({"error": "invalid entries"})
+
+    key = data["key"]
+    room = data["room"]
+    _members, status = Chats.members(room, key)
+
+    if status == 1:
+        return jsonify({"error": _members})
+
+    return jsonify({"members": _members})
 
 
 if __name__ == "__main__":

@@ -70,7 +70,7 @@ login_form.addEventListener('submit', (event) => {
     })
     .then(data => {
         if (data.error) {
-            toast(data.error, 1500, "95vh");
+            toast(data.error, 1500);
         } else {
             toast("Action completed");
             let session_cookie = JSON.stringify({
@@ -83,7 +83,9 @@ login_form.addEventListener('submit', (event) => {
             setTimeout(() => window.location.replace(page), 1500);
         }
     })
-    .catch(error => {});
+    .catch(error => {
+        toast(error, 1500);
+    });
 });
 
 function assert_mode() {

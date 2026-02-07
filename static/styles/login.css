@@ -1,3 +1,9 @@
+#menu ul li {
+    border: 1px solid black;
+    width: 95%;
+    font-size: 1.2rem;
+}
+
 form {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     background-color: white;
@@ -13,7 +19,7 @@ form {
 }
 
 form input, span, select {
-    margin: 4px;
+    margin: 2px;
 }
 
 form select {
@@ -23,7 +29,7 @@ form select {
 }
 
 form span {
-    font-size: smaller;
+    font-size: .7rem;
     color:blue;
     opacity: 0.6;
 }

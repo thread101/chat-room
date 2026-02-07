@@ -9,8 +9,16 @@
     <script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
 </head>
 <body>
-    <div class="page">
-        {% block content %}{% endblock content %}
-    </div>
+    <header>
+        <h2>{{ title }}</h2>
+    </header>
+    <section id="page">
+        <div id="menu">
+            {% block menu %}{% endblock menu %}
+        </div>
+        <div id="content">
+            {% block content %}{% endblock content %}
+        </div>
+    </section>
 </body>
 </html>

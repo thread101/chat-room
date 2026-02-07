@@ -10,7 +10,7 @@ from api_handler import *
 
 @app.route("/")
 def index():
-    return render_template("login.html", title="Simple chat login")
+    return render_template("login.html", title="Simple chat", rooms=Chats.rooms()[0])
 
 
 @app.route("/chat-home")

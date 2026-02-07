@@ -1,16 +1,26 @@
 let chat_box = document.getElementsByTagName('textarea')[0];
-let leave_button = document.getElementsByTagName("button")[0];
-let send_button = document.getElementsByTagName('button')[1];
+let send_button = document.getElementById("send-message");
 let chat_interval = null;
 let loaded_chats = 0;
+let num_members = 0;
+let show_member = false;
 
 window.onload = async () => await get_messages();
 
 async function get_messages() {
+    get_members();
     if (localStorage.getItem("session_cookie")) {
         let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
-        document.getElementsByTagName('h4')[0].innerText = session_cookie.room;
 
+        if (!document.getElementById("leave-chat")) {
+            document.getElementsByTagName("h2")[0].innerText = session_cookie.room;
+            let button = document.createElement("button");
+            button.innerText = "Leave chat";
+            button.id = "leave-chat";
+            button.onclick = leave_chat;
+            document.getElementsByTagName("header")[0].appendChild(button);
+        }
+        
         await fetch(`${api_path}/chat`, {
             method: 'POST',
             headers: {
@@ -43,13 +53,13 @@ async function get_messages() {
                 chat_interval = setInterval(() => get_new_messages(), 2000);
             }
         })
-        .catch(error => {});
+        .catch(error => toast(error));
     } else {
         window.location.replace(base_url);
     }
 }
 
-leave_button.onclick = async function() {
+async function leave_chat() {
     toast("Closing connection...");
     let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
     await fetch(`${api_path}/leave`, {
@@ -81,6 +91,67 @@ leave_button.onclick = async function() {
     setTimeout(() => window.location.replace(base_url), 1500);
     if (chat_interval)
         clearInterval(chat_interval);
+}
+
+function get_members() {
+    let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
+    fetch(`${api_path}/members`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            key: session_cookie.key,
+            room: session_cookie.room
+        })
+    })
+    .then(resp => {
+        if (resp.ok)
+            return resp.json();
+        else {
+            toast(resp.statusText);
+            return;
+        }
+    })
+    .then(data => {
+        if (data.error) {
+            toast(data.error);
+        } else {
+            let members = data.members;
+            if (members.length != num_members) {
+                let ul = document.getElementById("members");
+                if (num_members > members.length) {
+                    num_members = 0;
+                    ul.innerHTML = "";
+                }
+                for (let i=num_members; i<members.length; i++) {
+                    let li = document.createElement("li");
+                    li.innerText = members[i];
+                    ul.appendChild(li);
+                }
+            }
+            num_members = members.length;
+        }
+    })
+    .catch(error => toast(error));
+
+    if (window.innerWidth < 820) {
+        let h2 = document.getElementsByTagName("h2")[0];
+        h2.style.cursor = "pointer";
+        h2.addEventListener('click', function() {
+            let menu = document.getElementById("menu");
+            let content = document.getElementById("content");
+            if (show_member) {
+                menu.style.display = "none";
+                content.style.display = "flex";
+            } else {
+                menu.style.display = "block";
+                menu.style.minHeight = "100%";
+                content.style.display = "none";
+            }
+            show_member = !show_member;
+        });
+    }
 }
 
 chat_box.oninput = () => {
@@ -138,6 +209,7 @@ send_button.onclick = () => {
 }
 
 function get_new_messages() {
+    get_members();
     let session_cookie = JSON.parse(localStorage.getItem("session_cookie"));
     fetch (`${api_path}/chat`, {
         method: "POST",
